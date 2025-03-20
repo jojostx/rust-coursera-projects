@@ -1,27 +1,74 @@
-enum FileSize {
-    Bytes(u64),
-    Kilobytes(f64),
-    Megabytes(f64),
-    Gigabytes(f64),
-}
+use std::env;
 
-fn format_size(size: u64) -> String {
-    let filesize = match size {
-        0..=999 => FileSize::Bytes(size),
-        1000..=999_999 => FileSize::Kilobytes(size as f64 / 1000.0),
-        1_000_000..=999_999_999 => FileSize::Megabytes(size as f64 / 1_000_000.0),
-        _ => FileSize::Gigabytes(size as f64 / 1_000_000_000.0),
-    };
-
-    match filesize {
-        FileSize::Bytes(bytes) => format!("{} bytes", bytes),
-        FileSize::Kilobytes(kb) => format!("{:.2} KB", kb),
-        FileSize::Megabytes(mb) => format!("{:.2} MB", mb),
-        FileSize::Gigabytes(gb) => format!("{:.2} GB", gb),
-    }
+#[derive(Debug)]
+struct Sizes { 
+    bytes: String, 
+    kilobytes: String, 
+    megabytes: String, 
+    gigabytes: String
 }
 
 fn main() {
-    let result = format_size(6888837399);
-    println!("{}", result)
+    match env::args().nth(1) {
+        Some(first_arg) => {
+            let size = make_size(first_arg).unwrap();
+            print!("{:?}\n", size);
+        },
+        None => println!("No arguments passed."),
+    }
+}
+
+fn make_size(input: String) -> Result<Sizes, ()> {
+    match input.to_lowercase().split_once(' ') {
+        Some((size, unit_)) => {
+            match unit_ {
+                "b" => {
+                    match size.parse::<i32>() {
+                        Ok(num) => Ok(Sizes { 
+                            bytes: format!("{} bytes", num),
+                            kilobytes: format!("{} bytes", num),
+                            megabytes: format!("{} bytes", num),
+                            gigabytes: format!("{} bytes", num),
+                        }),
+                        Err(_) => Err(()),
+                    }
+                },
+                "kb" => {
+                    match size.parse::<i32>() {
+                        Ok(num) => Ok(Sizes { 
+                            bytes: format!("{} bytes", num * 1000),
+                            kilobytes: format!("{} kilobytes", num),
+                            megabytes: format!("{} megabytes", num/1024),
+                            gigabytes: format!("{} gigabytes", num/1_048_576),
+                        }),
+                        Err(_) => Err(()),
+                    }
+                },
+                "mb" => {
+                    match size.parse::<i32>() {
+                        Ok(num) => Ok(Sizes { 
+                            bytes: format!("{} bytes", num * 1024 * 1024),
+                            kilobytes: format!("{} kilobytes", num * 1024),
+                            megabytes: format!("{} megabytes", num),
+                            gigabytes: format!("{} gigabytes", num/1024),
+                        }),
+                        Err(_) => Err(()),
+                    }
+                },
+                "gb" => {
+                    match size.parse::<i32>() {
+                        Ok(num) => Ok(Sizes { 
+                            bytes: format!("{} bytes", num * 1024 * 1024 * 1024),
+                            kilobytes: format!("{} kilobytes", num * 1024 * 1024),
+                            megabytes: format!("{} megabytes", num * 1024),
+                            gigabytes: format!("{} gigabytes", num),
+                        }),
+                        Err(_) => Err(()),
+                    }
+                },
+                _ => Err(())
+            }
+        },
+        None => Err(())
+    }
 }
