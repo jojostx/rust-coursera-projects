@@ -19,7 +19,7 @@ jobs:
     - name: Set up Rust
       uses: actions-rs/toolchain@v1
       with:
-        rust-version: stable
+        toolchain: stable
     - name: Test all rust libraries
       run: |
         echo "Searching for Rust project subfolders..."
@@ -41,7 +41,7 @@ jobs:
     - name: Set up Rust
       uses: actions-rs/toolchain@v1
       with:
-        rust-version: stable
+        toolchain: stable
     - name: Build
       run:  |
         echo "Searching for Rust project subfolders..."
