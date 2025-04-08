@@ -1,5 +1,5 @@
 rust-versions:
-	@echo "Rust command-line utility versions:"
+	@echo "Rust command-line utilities versions:"
 	rustc --version						# rust compiler
 	cargo --version						# rust package manager
 	rustfmt --version					# rust formatter
