@@ -1,14 +1,20 @@
+use std::collections::HashMap;
 use std::error::Error;
-use std::io::{Read, Write};
-
-use mio::net::{TcpListener, TcpStream};
-use mio::{Events, Interest, Poll, Token};
 use std::io;
+use std::io::{Read, Write};
 use std::net::SocketAddr;
 use std::os::unix::io::AsRawFd;
 use std::sync::{Arc, Mutex};
 
+use mio::net::{TcpListener, TcpStream};
+use mio::{Events, Interest, Poll, Token};
+
 const SERVER: Token = Token(0);
+struct Client {
+    stream: Arc<Mutex<TcpStream>>,
+    buffer: Vec<u8>,
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let addr: SocketAddr = "127.0.0.1:8080".parse()?;
     let mut poll: Poll = Poll::new()?;
@@ -17,7 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut listener = TcpListener::bind(addr)?;
     println!("{}", red("now accepting connections"));
 
-    let mut clients: Vec<(Token, Arc<Mutex<TcpStream>>)> = vec![];
+    let mut clients: HashMap<Token, Client> = HashMap::new();
     let mut next_token_id = 1;
 
     // Start listening for incoming connections.
@@ -36,7 +42,13 @@ fn main() -> Result<(), Box<dyn Error>> {
                 poll.registry()
                     .register(&mut client_stream, token, Interest::READABLE)?;
 
-                clients.push((token, Arc::new(Mutex::new(client_stream))));
+                clients.insert(
+                    token,
+                    Client {
+                        stream: Arc::new(Mutex::new(client_stream)),
+                        buffer: Vec::new(),
+                    },
+                );
                 continue;
             }
 
@@ -95,14 +107,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn compare_tcp_streams(stream1: &TcpStream, stream2: &TcpStream) -> bool {
     #[cfg(unix)]
     {
-        // Unix-based system: Compare raw file descriptors
-        stream1.as_raw_fd() != stream2.as_raw_fd()
+        stream1.as_raw_fd() == stream2.as_raw_fd()
     }
 
     #[cfg(windows)]
     {
-        // Windows system: Compare raw socket handles
-        stream1.as_raw_socket() != stream2.as_raw_socket()
+        stream1.as_raw_socket() == stream2.as_raw_socket()
     }
 }
 
