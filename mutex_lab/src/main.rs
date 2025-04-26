@@ -1,13 +1,21 @@
-use std::thread;
+use std::{
+    sync::{Arc, Mutex},
+    thread,
+};
 
 fn main() {
-    let mut data = vec![1, 2, 3];
+    let data = vec![1, 2, 3];
+    let data_mx = Arc::new(Mutex::new(data));
 
     for i in 0..3 {
         // Try to capture a mutable reference in multiple threads
         // This will fail to compile!
+        let dlock = data_mx.clone();
+
         thread::spawn(move || {
-            data[i] += 1;
+            // dlock[i] += 1;
+            let mut dlock = dlock.lock().unwrap();
+            dlock[i] += 1;
         });
     }
 
