@@ -1,0 +1,4 @@
+   Compiling catsay v0.1.0 (/mnt/c/Users/L14/Desktop/code/rust-coursera-projects/catsay)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 7.41s
+     Running `target/debug/catsay woof`
+A cat shouldn't bark like a dog.
