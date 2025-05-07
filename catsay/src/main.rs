@@ -1,5 +1,7 @@
+use anyhow::Context;
 use clap::Parser;
 use colored::Colorize;
+use std::io::{Read, stdin};
 
 #[derive(Parser)]
 struct Options {
@@ -12,13 +14,25 @@ struct Options {
 
     #[clap(short = 'f', long = "file")]
     catfile: Option<std::path::PathBuf>,
+
+    #[clap(short = 's', long = "stdin")]
+    /// Read the message from STDIN instead of the argument
+    stdin: bool,
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let options = Options::parse();
     let mut message = options.message;
 
     let eye = if options.dead { "x" } else { "o" };
+
+    if options.stdin {
+        message.clear();
+
+        stdin()
+            .read_to_string(&mut message)
+            .with_context(|| "Could not read input")?;
+    }
 
     if message.to_lowercase() == "woof" {
         eprintln!("A cat shouldn't bark like a dog.");
@@ -30,8 +44,8 @@ fn main() {
     match &catfile {
         Some(path) => {
             // read from file
-            let msg = &format!("could not read file {:?}", path);
-            let cat_picture = std::fs::read_to_string(path).expect(msg);
+            let cat_picture = std::fs::read_to_string(path)
+                .with_context(|| format!("Could not read file {:?}", path))?;
 
             let eye = format!("{}", eye.red().bold());
 
@@ -49,4 +63,6 @@ fn main() {
             println!("   =(  I  )=");
         }
     }
+
+    Ok(())
 }
